@@ -9,6 +9,7 @@ from django.db.models import Exists, Max, OuterRef
 from django.db.models.functions import Substr
 from django.test import TestCase, skipUnlessDBFeature
 from django.test.utils import isolate_apps
+from collections import namedtuple
 from django.utils.deprecation import RemovedInDjango40Warning
 
 from .models import (
@@ -1073,3 +1074,13 @@ class LookupTests(TestCase):
             with self.subTest(qs=qs):
                 with self.assertWarnsMessage(RemovedInDjango40Warning, msg):
                     qs.exists()
+
+    def test_namedtuple_range(self):
+        # Namedtuple passed as __range argument is supported.
+        NT = namedtuple('NT', ['start', 'end'])
+        nt_range = NT(self.a1.pub_date, self.a4.pub_date)
+        expected = list(Article.objects.filter(
+            pub_date__range=(self.a1.pub_date, self.a4.pub_date)
+        ))
+        result = list(Article.objects.filter(pub_date__range=nt_range))
+        self.assertEqual(result, expected)

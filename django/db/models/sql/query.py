@@ -1077,10 +1077,18 @@ class Query(BaseExpression):
         elif isinstance(value, (list, tuple)):
             # The items of the iterable may be expressions and therefore need
             # to be resolved independently.
-            return type(value)(
-                self.resolve_lookup_value(sub_value, can_reuse, allow_joins)
-                for sub_value in value
-            )
+            resolved_items = [
+                self.resolve_lookup_value(item, can_reuse, allow_joins)
+                for item in value
+            ]
+            # Preserve tuple and namedtuple types by expanding resolved items;
+            # fall back to a plain tuple if the constructor signature differs.
+            if isinstance(value, tuple):
+                try:
+                    return type(value)(*resolved_items)
+                except TypeError:
+                    return tuple(resolved_items)
+            return type(value)(resolved_items)
         return value
 
     def solve_lookup_type(self, lookup):
