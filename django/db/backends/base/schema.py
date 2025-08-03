@@ -527,8 +527,9 @@ class BaseDatabaseSchemaEditor:
         news = {tuple(fields) for fields in new_unique_together}
         # Deleted uniques
         for fields in olds.difference(news):
+            # When dropping unique_together, exclude primary key constraints
             self._delete_composed_index(
-                model, fields, {"unique": True}, self.sql_delete_unique
+                model, fields, {"unique": True, "primary_key": False}, self.sql_delete_unique
             )
         # Created uniques
         for field_names in news.difference(olds):
