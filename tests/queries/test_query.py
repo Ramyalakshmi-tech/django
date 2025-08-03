@@ -1,3 +1,4 @@
+from collections import namedtuple
 from datetime import datetime
 
 from django.core.exceptions import FieldError
@@ -11,7 +12,7 @@ from django.db.models.sql.where import OR
 from django.test import SimpleTestCase
 from django.test.utils import register_lookup
 
-from .models import Author, Item, ObjectC, Ranking
+from .models import Author, Item, ObjectC, Ranking, Number
 
 
 class TestQuery(SimpleTestCase):
@@ -129,6 +130,13 @@ class TestQuery(SimpleTestCase):
         name_exact = where.children[0]
         self.assertIsInstance(name_exact, Exact)
         self.assertEqual(name_exact.rhs, "['a', 'b']")
+
+    def test_namedtuple_lookup_value(self):
+        query = Query(Number)
+        range_value = namedtuple('Range', 'near far')(1, 2)
+        where = query.build_where(Q(num__range=range_value))
+        num_range = where.children[0]
+        self.assertEqual(tuple(num_range.rhs), (1, 2))
 
     def test_filter_conditional(self):
         query = Query(Item)
