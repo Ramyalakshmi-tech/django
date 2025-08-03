@@ -2809,6 +2809,43 @@ class OperationTests(OperationTestBase):
             operation.describe(), "Alter unique_together for Pony (0 constraint(s))"
         )
 
+    def test_alter_unique_together_single_field_unique(self):
+        operations = [
+            migrations.CreateModel(
+                "Pony",
+                [
+                    ("id", models.AutoField(primary_key=True)),
+                    ("pink", models.IntegerField(default=1)),
+                ],
+                options={"unique_together": [("id",)]},
+            )
+        ]
+        project_state = self.apply_operations("test_autsfu", ProjectState(), operations)
+        table = "test_autsfu_pony"
+        with connection.cursor() as cursor:
+            constraints = connection.introspection.get_constraints(cursor, table)
+            uniques = [
+                c
+                for c in constraints.values()
+                if c["unique"] and c["columns"] == ["id"]
+            ]
+            self.assertEqual(len(uniques), 2)
+        operation = migrations.AlterUniqueTogether("Pony", None)
+        new_state = project_state.clone()
+        operation.state_forwards("test_autsfu", new_state)
+        with connection.schema_editor() as editor:
+            operation.database_forwards(
+                "test_autsfu", editor, project_state, new_state
+            )
+        with connection.cursor() as cursor:
+            constraints = connection.introspection.get_constraints(cursor, table)
+            uniques = [
+                c
+                for c in constraints.values()
+                if c["unique"] and c["columns"] == ["id"]
+            ]
+            self.assertEqual(len(uniques), 1)
+
     def test_add_index(self):
         """
         Test the AddIndex operation.

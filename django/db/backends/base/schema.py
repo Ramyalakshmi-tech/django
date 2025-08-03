@@ -562,6 +562,9 @@ class BaseDatabaseSchemaEditor:
         }
         meta_index_names = {constraint.name for constraint in model._meta.indexes}
         columns = [model._meta.get_field(field).column for field in fields]
+        constraint_kwargs = constraint_kwargs.copy()
+        if constraint_kwargs.get("unique"):
+            constraint_kwargs.setdefault("primary_key", False)
         constraint_names = self._constraint_names(
             model,
             columns,
