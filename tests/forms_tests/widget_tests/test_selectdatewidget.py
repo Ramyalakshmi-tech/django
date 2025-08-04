@@ -4,6 +4,7 @@ from django.forms import DateField, Form, SelectDateWidget
 from django.test import override_settings
 from django.utils import translation
 from django.utils.dates import MONTHS_AP
+import sys
 
 from .base import WidgetTest
 
@@ -99,6 +100,20 @@ class SelectDateWidgetTest(WidgetTest):
             """
             ),
         )
+
+    def test_value_from_datadict_overflow(self):
+        # OverflowError in date constructor should not crash but be handled as invalid date input.
+        class TestForm(Form):
+            my_date = DateField(widget=SelectDateWidget())
+
+        data = {
+            'my_date_day': '1',
+            'my_date_month': '1',
+            'my_date_year': str(sys.maxsize + 1),
+        }
+        form = TestForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('my_date', form.errors)
 
     def test_render_none(self):
         """
