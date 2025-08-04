@@ -621,6 +621,18 @@ class SelectDateWidgetTest(WidgetTest):
                     self.widget.value_from_datadict(data, {}, "field"), expected
                 )
 
+    def test_value_from_datadict_overflow(self):
+        widget = SelectDateWidget()
+        data = {
+            "field_year": "1234567821345678",
+            "field_month": "1",
+            "field_day": "1",
+        }
+        self.assertEqual(
+            widget.value_from_datadict(data, {}, "field"),
+            "1234567821345678-1-1",
+        )
+
     def test_value_omitted_from_data(self):
         self.assertIs(self.widget.value_omitted_from_data({}, {}, "field"), True)
         self.assertIs(
